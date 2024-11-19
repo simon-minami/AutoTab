@@ -1,8 +1,11 @@
 import os
 import torch
 import torch.nn as nn
+import plotly.graph_objects as go
+import numpy as np
 from TabCNN import TabCNN
-
+import torch.nn.functional as F
+# TODO: add eval, and maybe auto creation of loss graphs
 class TabCNNCrossEntropyLoss(nn.Module):
     '''
     custom loss function for tabcnn
@@ -32,6 +35,7 @@ class Trainer:
         self.test_dataloader = test_dataloader
         self.loss_fn = loss_fn
         self.model = model
+        self.best_model_state = None
         self.optimizer = optimizer
 
         self.num_train_batches = len(train_dataloader)
@@ -88,13 +92,80 @@ class Trainer:
             ### saving model
             if avg_val_loss < self.best_loss:
                 self.best_loss = avg_val_loss
+                self.best_model_state = self.model.state_dict()
                 torch.save({
                     'epoch': epoch + 1,
-                    'model_state_dict': self.model.state_dict(),
+                    'model_state_dict': self.best_model_state,
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     'best_loss': self.best_loss,
                 }, f'{self.save_path}/best.pt')
                 print(f'best model saved after epoch: {epoch + 1}')
 
 
+
+    def visualize(self):
+        '''
+        saves train/val loss graphs
+        run after fit()
+        '''
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=list(range(1, self.epochs + 1)),
+            y=np.round(self.train_losses, 3),
+            mode='lines+markers',
+            name='Train Loss'
+        ))
+        fig.add_trace(go.Scatter(
+            x=list(range(1, self.epochs + 1)),
+            y=np.round(self.val_losses, 3),
+            mode='lines+markers',
+            name='Validation Loss'
+        ))
+
+        # Add labels and title
+        fig.update_layout(
+            title='Train/Validation Loss',
+            xaxis_title='Epochs',
+            yaxis_title='Loss',
+            hovermode='x'
+        )
+
+        # Save as an interactive HTML file
+        fig.write_html('loss.html')
+
+    def eval(self):
+        '''
+        run model eval on test set
+        right now multipitch precision metric implemented
+
+        multipitch precision (basically same as regular precision): true pos / pred pos
+        element wise mult of y_pred and y (result is 1 where correct, 0 where incorrect)
+        sum to get total true positives
+        simply do a sum of y_pred to get total pre positives
+        '''
+
+        print('running eval...')
+        # load best model
+        model = TabCNN()
+        model.to(self.device)
+        model.load_state_dict(self.best_model_state)
+        model.eval()
+
+        true_pos = 0
+        pred_pos = 0
+        for batch_id, (X, y) in enumerate(self.test_dataloader):
+            X, y = X.to(self.device), y.to(self.device)
+            with torch.inference_mode():
+                y_pred = model(X)  # output is batch size, 6, 21
+                y_pred = torch.argmax(y_pred, dim=-1)  # get predicted class indices
+                y_pred_hot = F.one_hot(y_pred, num_classes=21)  # convert to 1 hot for easier multiplication
+                y_hot = F.one_hot(y, num_classes=21)
+                # shape should be (batchsize, 6, 21)
+                # print(y_pred_hot.shape, y_hot.shape)
+
+                true_pos += torch.sum(y_pred_hot * y_hot)
+                pred_pos += torch.sum(y_pred_hot)
+        multipitch_precision = true_pos / (pred_pos + 1e-8)
+        print(f'MP precision on test set: {multipitch_precision}')
+        return multipitch_precision
 
