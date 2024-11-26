@@ -98,7 +98,6 @@ class Evaluator:
         '''
         Visualize note predictions as a fretboard diagram synced with audio.
         '''
-        #TODO: i want audio playing in background
         # Preprocess the audio
         audio = GuitarSet(filenames=[filename])  # Replace with your actual preprocessing
         num_frames = len(audio)
@@ -169,10 +168,21 @@ class Evaluator:
                 else:
                     incorrect_positions.append((pred_fret - 1, string))
 
-            # Update marker positions
-            ground_truth_markers.set_data(*zip(*ground_truth_positions))
-            correct_preds.set_data(*zip(*correct_positions))
-            incorrect_preds.set_data(*zip(*incorrect_positions))
+            # Update marker positions, ensuring the lists are not empty
+            if ground_truth_positions:
+                ground_truth_markers.set_data(*zip(*ground_truth_positions))
+            else:
+                ground_truth_markers.set_data([], [])  # Clear the markers
+
+            if correct_positions:
+                correct_preds.set_data(*zip(*correct_positions))
+            else:
+                correct_preds.set_data([], [])
+
+            if incorrect_positions:
+                incorrect_preds.set_data(*zip(*incorrect_positions))
+            else:
+                incorrect_preds.set_data([], [])
 
             return ground_truth_markers, correct_preds, incorrect_preds
 
