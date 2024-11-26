@@ -4,8 +4,8 @@ import torch.nn as nn
 import plotly.graph_objects as go
 import numpy as np
 from TabCNN import TabCNN
-import torch.nn.functional as F
-# TODO: add eval, and maybe auto creation of loss graphs
+from GuitarSet import GuitarSet
+from torch.utils.data import DataLoader
 class TabCNNCrossEntropyLoss(nn.Module):
     '''
     custom loss function for tabcnn
@@ -50,7 +50,7 @@ class Trainer:
         self.save_path = save_path
         os.makedirs(save_path, exist_ok=True)
 
-    def fit(self):
+    def fit(self, save_viz=True):
         for epoch in range(self.epochs):
             print(f'EPOCH: {epoch + 1}')
             self.model.train()
@@ -100,10 +100,11 @@ class Trainer:
                     'best_loss': self.best_loss,
                 }, f'{self.save_path}/best.pt')
                 print(f'best model saved after epoch: {epoch + 1}')
+        if save_viz:
+            self.make_loss_graph()
 
 
-
-    def visualize(self):
+    def make_loss_graph(self):
         '''
         saves train/val loss graphs
         run after fit()
@@ -133,39 +134,11 @@ class Trainer:
         # Save as an interactive HTML file
         fig.write_html('loss.html')
 
-    def eval(self):
-        '''
-        run model eval on test set
-        right now multipitch precision metric implemented
 
-        multipitch precision (basically same as regular precision): true pos / pred pos
-        element wise mult of y_pred and y (result is 1 where correct, 0 where incorrect)
-        sum to get total true positives
-        simply do a sum of y_pred to get total pre positives
-        '''
 
-        print('running eval...')
-        # load best model
-        model = TabCNN()
-        model.to(self.device)
-        model.load_state_dict(self.best_model_state)
-        model.eval()
 
-        true_pos = 0
-        pred_pos = 0
-        for batch_id, (X, y) in enumerate(self.test_dataloader):
-            X, y = X.to(self.device), y.to(self.device)
-            with torch.inference_mode():
-                y_pred = model(X)  # output is batch size, 6, 21
-                y_pred = torch.argmax(y_pred, dim=-1)  # get predicted class indices
-                y_pred_hot = F.one_hot(y_pred, num_classes=21)  # convert to 1 hot for easier multiplication
-                y_hot = F.one_hot(y, num_classes=21)
-                # shape should be (batchsize, 6, 21)
-                # print(y_pred_hot.shape, y_hot.shape)
+    #TODO: separate eval and video methods from trainer into new class?
+    #TODO: for exampel: if you want to run eval or get demo video from different models, without retraining
 
-                true_pos += torch.sum(y_pred_hot * y_hot)
-                pred_pos += torch.sum(y_pred_hot)
-        multipitch_precision = true_pos / (pred_pos + 1e-8)
-        print(f'MP precision on test set: {multipitch_precision}')
-        return multipitch_precision
+
 

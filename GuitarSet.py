@@ -23,20 +23,21 @@ class GuitarSet(Dataset):
 
     '''
 
-    def __init__(self, data_path='data/guitarset/spec_repr', window_size=9, num_files=None):
+    def __init__(self, data_path='guitarset/spec_repr', window_size=9, filenames=None):
         # Initialize the dataset object with the data path and window size
         self.data_path = data_path
         self.window_size = window_size
         self.half_window_size = self.window_size // 2  # Half of the context window size for padding
 
         # Load and sort file paths from the specified directory
-        self.filenames = sorted(os.listdir(self.data_path))
-
-        # specify number of audio files to use (only really used for testing when we don't want whole dataest)
-        if num_files is None:
-            self.file_paths = [os.path.join(data_path, f) for f in self.filenames]
+        # default is to load all audio files from data_path
+        if filenames is None:
+            self.filenames = sorted(os.listdir(self.data_path))
         else:
-            self.file_paths = [os.path.join(data_path, f) for f in self.filenames[:num_files]]
+            self.filenames = filenames
+
+        self.file_paths = [os.path.join(data_path, f) for f in self.filenames]
+
 
 
 
@@ -51,9 +52,12 @@ class GuitarSet(Dataset):
             audio = data['audio']  # Extract the audio representation
             num_frames = audio.shape[0]  # Number of frames in the audio
             # Apply padding to the audio to accommodate context windows at the start and end
-            padded_audio = np.pad(audio, [(self.half_window_size, self.half_window_size), (0, 0)], mode='constant')
-            # Transpose and add a channel dimension to match the PyTorch format (1, 192, num_frames)
-            padded_audio = torch.tensor(padded_audio.T, dtype=torch.float32).unsqueeze(0)  # Shape: (1, 192, padded_frames)
+            # padded_audio = np.pad(audio, [(self.half_window_size, self.half_window_size), (0, 0)], mode='constant')
+
+            padded_audio = np.pad(audio, [(0, 0), (self.half_window_size, self.half_window_size)], mode='constant')
+            # shape should be (192, padded_frames)
+            # add a channel dimension to match the PyTorch format (1, 192, num_frames)
+            padded_audio = torch.tensor(padded_audio, dtype=torch.float32).unsqueeze(0)  # Shape: (1, 192, padded_frames)
 
             # Extract sliding windows across the frame dimension using unfold
             X = padded_audio.unfold(dimension=2, size=self.window_size, step=1).permute(2, 0, 1, 3)
@@ -91,7 +95,7 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
     # Initialize the dataset
-    LEBRON = GuitarSet(data_path='data/guitarset/spec_repr', window_size=9)
+    LEBRON = GuitarSet(data_path='guitarset/spec_repr', window_size=9)
 
     # Wrap it in a DataLoader
     dataloader = DataLoader(LEBRON, batch_size=32, shuffle=True, num_workers=4)
