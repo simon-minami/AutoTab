@@ -27,12 +27,12 @@ class TabCNNCrossEntropyLoss(nn.Module):
 
 
 class Trainer:
-    def __init__(self, epochs, train_dataloader, val_dataloader, test_dataloader, model, optimizer, loss_fn=TabCNNCrossEntropyLoss(), save_path='models'):
+    def __init__(self, epochs, train_dataloader, val_dataloader, model, optimizer, loss_fn=TabCNNCrossEntropyLoss(), save_path='models'):
         # train, val, test dataloders model, loss fn etc
         self.epochs = epochs
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
-        self.test_dataloader = test_dataloader
+        # self.test_dataloader = test_dataloader
         self.loss_fn = loss_fn
         self.model = model
         self.best_model_state = None

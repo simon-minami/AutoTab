@@ -42,7 +42,6 @@ if __name__ == '__main__':
         epochs=args.epochs,
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
-        test_dataloader=test_dataloader,
         model=model,
         optimizer=optimizer
     )
@@ -50,7 +49,8 @@ if __name__ == '__main__':
     trainer.fit()
 
     evaluator = Evaluator(
-        model_path='models/best.pt'
+        model_path='models/best.pt',
+        test_dataloader=test_dataloader
     )
     mp_precision = evaluator.evaluate()
     evaluator.output_video('00_Rock2-85-F_comp_mic')

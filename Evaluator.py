@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 import numpy as np
 class Evaluator:
-    def __init__(self, model_path='models/best.pt'):
+    def __init__(self, test_dataloader, model_path='models/best.pt', ):
         self.model_path = model_path
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+        self.test_dataloader = test_dataloader
         # initialize model
         self.model = TabCNN()
         self.model.to(self.device)
