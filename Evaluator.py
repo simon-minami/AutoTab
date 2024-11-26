@@ -102,8 +102,10 @@ class Evaluator:
         # Preprocess the audio
         audio = GuitarSet(filenames=[filename])  # Replace with your actual preprocessing
         num_frames = len(audio)
-        X, y = DataLoader(audio, batch_size=num_frames, shuffle=False)[0]
-        X, y = X.to(self.device), y.to(self.device)
+        dataloader = DataLoader(audio, batch_size=num_frames, shuffle=False)
+        for X, y in dataloader:
+            X, y = X.to(self.device), y.to(self.device)
+            break
 
         with torch.inference_mode():
             y_pred = self.model(X)  # Output shape: (num_frames, 6, 21)
