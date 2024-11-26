@@ -98,7 +98,7 @@ class Evaluator:
         '''
         Visualize note predictions as a fretboard diagram synced with audio.
         '''
-
+        #TODO: i want audio playing in background
         # Preprocess the audio
         audio = GuitarSet(filenames=[filename])  # Replace with your actual preprocessing
         num_frames = len(audio)

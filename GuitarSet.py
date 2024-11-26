@@ -34,7 +34,7 @@ class GuitarSet(Dataset):
         if filenames is None:
             self.filenames = sorted(os.listdir(self.data_path))
         else:
-            self.filenames = filenames
+            self.filenames = [filename + '.npz' for filename in filenames]
 
         self.file_paths = [os.path.join(data_path, f) for f in self.filenames]
 

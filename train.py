@@ -53,5 +53,5 @@ if __name__ == '__main__':
         test_dataloader=test_dataloader
     )
     mp_precision = evaluator.evaluate()
-    evaluator.output_video('00_Rock2-85-F_comp_mic.wav')
+    evaluator.output_video('00_Rock2-85-F_comp_mic')
     print(mp_precision)
