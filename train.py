@@ -49,7 +49,7 @@ if __name__ == '__main__':
     trainer.fit()
 
     evaluator = Evaluator(
-        model_path='models/best.pt',
+        model_path='models/best_test.pt',
         test_dataloader=test_dataloader
     )
     mp_precision = evaluator.evaluate()
