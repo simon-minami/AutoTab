@@ -8,8 +8,9 @@ import torch.nn.functional as F
 from GuitarSet import GuitarSet
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, FFMpegWriter
-import numpy as np
+from matplotlib.patheffects import withStroke
+from matplotlib.animation import FuncAnimation, PillowWriter
+import subprocess
 class Evaluator:
     def __init__(self, test_dataloader, model_path='models/best.pt', ):
         self.model_path = model_path
@@ -55,45 +56,6 @@ class Evaluator:
         print(f'MP precision on test set: {multipitch_precision}')
         return multipitch_precision
 
-    # def output_video(self, filename):
-    #     '''
-    #
-    #         input: need the audio file to run predictions on
-    #         we will have access to self.best model
-    #
-    #         output: video with visual of guitar neck, with dots that show correct/incorrect predictions
-    #         should be synced with input audio
-    #
-    #         how do we line up model preds with the audio?
-    #         remember, based on audio preprocessing, preds should be at rate of 22050/512 = ~43 per sec
-    #         so for a 20 audio clip, there should be like 860 preds.
-    #
-    #         visulization:
-    #         I want diagram of guitar fretboard, vertical with 12 frets
-    #         I want each pred/ground truth to be plotted as a circle at the corresponding fret
-    #         ground truth is blue circle
-    #         correct prediction would be blue circle with some highlight
-    #         incorrect pred is red circle
-    #         not sure how i would visuzlize the closed and open string. i'm thinking an x and circle above the first fret
-    #
-    #
-    #         '''
-    #     model = TabCNN()
-    #     model.to(self.device)
-    #     model.load_state_dict(self.best_model_state)
-    #     model.eval()
-    #
-    #     audio = GuitarSet(filenames=['00_Rock2-85-F_comp_mic'])
-    #     num_frames = audio.__len__()
-    #     X, y = DataLoader(audio, batch_size=num_frames, shuffle=False)[0]
-    #     X, y = X.to(self.device), y.to(self.device)
-    #     with torch.inference_mode():
-    #         y_pred = model(X)  # output is batch size, 6, 21
-    #         y_pred = torch.argmax(y_pred, dim=-1)  # condense into fret index predictions
-
-        # now, we can iterate through y_pred and generate visuliziation
-        # remember,  0 corresponds to string not played, 1 corresponds to open, 2 corresponds to 1st fret etc
-
     def output_video(self, filename):
         '''
         Visualize note predictions as a fretboard diagram synced with audio.
@@ -112,84 +74,115 @@ class Evaluator:
 
         y_pred = y_pred.cpu().numpy()
         y_true = y.cpu().numpy()
+        print(y_pred.shape)
+        print('hi hello hi lmao')
+        audio_file = f'guitarset/audio_mono-mic/{filename}_mic.wav'
+        self.plot_fretboard_animation(y_true, y_pred)
+        self.add_audio_to_video('fretboard_animation_no_audio.mp4', audio_file)
 
-        # Visualization Parameters
-        num_frets = 12
-        num_strings = 6
-        frame_rate = int(22050/512)  # Predictions per second
-        duration = num_frames / frame_rate  # Duration of the audio clip
+    def plot_fretboard_animation(self, ground_truth_frames, prediction_frames, output_file='fretboard_animation_no_audio.mp4'):
+        """
+        Generates an animated MP4 of fret predictions over multiple frames.
 
-        # Set up the fretboard figure
-        fig, ax = plt.subplots(figsize=(8, 10))
-        ax.set_xlim(-1, num_frets + 1)
-        ax.set_ylim(-0.5, num_strings - 0.5)
-        ax.set_yticks(range(num_strings))
-        ax.set_yticklabels([f"String {i + 1}" for i in range(num_strings)])
-        ax.set_xticks(range(num_frets + 1))
-        ax.set_xticklabels([str(f) for f in range(num_frets + 1)])
-        ax.grid(color='gray', linestyle='--', linewidth=0.5)
+        :param ground_truth_frames: Numpy array of shape (audio_frames, strings), ground truth fret values.
+        :param prediction_frames: Numpy array of shape (audio_frames, strings), predicted fret values.
+        :param output_file: Name of the output MP4 file.
+        """
+        audio_frames, strings = ground_truth_frames.shape
+        assert prediction_frames.shape == (audio_frames, strings), "Ground truth and prediction frames must have the same shape."
 
-        # Initialize elements for animation
-        ground_truth_markers, = ax.plot([], [], 'o', color='blue', label='Ground Truth')
-        correct_preds, = ax.plot([], [], 'o', color='cyan', label='Correct Prediction')
-        incorrect_preds, = ax.plot([], [], 'o', color='red', label='Incorrect Prediction')
-        open_strings = ax.text(0.5, num_strings, "O", fontsize=12, ha='center', color='green')
-        closed_strings = ax.text(0.5, num_strings, "X", fontsize=12, ha='center', color='black')
+        # Initialize figure
+        fig, ax = plt.subplots(figsize=(5, 10))
 
-        def update(frame):
-            '''
-            Update the fretboard visualization for each frame.
-            '''
-            ground_truth_positions = []
-            correct_positions = []
-            incorrect_positions = []
 
-            # Loop through each string
-            for string in range(num_strings):
-                true_fret = y_true[frame, string]
-                pred_fret = y_pred[frame, string]
+        def init_fretboard():
+            """Initializes the static fretboard."""
+            ax.clear()
+            max_frets = 12
+            ax.set_xlim(0.5, 6.5)  # String positions
+            ax.set_ylim(-0.5, max_frets + 0.5)  # Frets
+            strings_labels = ['E', 'A', 'D', 'G', 'B', 'e']  # Low E to high e
+            ax.set_xticks(range(1, 7))
+            ax.set_xticklabels(strings_labels)
+            ax.xaxis.set_label_position('top')
+            ax.xaxis.tick_top()
+            ax.set_yticks([i + 0.5 for i in range(max_frets)])
+            ax.set_yticklabels(range(1, max_frets + 1))  # Label starting from fret 1
+            ax.invert_yaxis()  # Reverse fret order
+            for i in range(1, 7):  # Strings
+                ax.vlines(x=i, ymin=0, ymax=max_frets, color='black', linewidth=0.5)
+            for j in range(max_frets + 1):  # Frets
+                ax.hlines(y=j, xmin=0.5, xmax=6.5, color='black', linewidth=0.5)
+            ax.set_title("Guitar Fretboard Predictions (Frame-by-Frame)")
 
-                # Skip unplayed strings
-                if true_fret == 0:
-                    closed_strings.set_text("X")
-                    continue
 
-                # Open string
-                if true_fret == 1:
-                    open_strings.set_text("O")
-                    continue
 
-                # Add ground truth marker
-                ground_truth_positions.append((true_fret - 1, string))  # Fret starts at 1
+        def update(frame_idx):
+            """Updates the fretboard for the given frame index."""
+            ax.clear()
+            init_fretboard()
+            ground_truth = ground_truth_frames[frame_idx]
+            predictions = prediction_frames[frame_idx]
 
-                # Add prediction markers
-                if true_fret == pred_fret:
-                    correct_positions.append((true_fret - 1, string))
-                else:
-                    incorrect_positions.append((pred_fret - 1, string))
+            for i in range(strings):
+                gt_fret = ground_truth[i]
+                pred_fret = predictions[i]
 
-            # Update marker positions, ensuring the lists are not empty
-            if ground_truth_positions:
-                ground_truth_markers.set_data(*zip(*ground_truth_positions))
-            else:
-                ground_truth_markers.set_data([], [])  # Clear the markers
+                # Plot closed/open strings
+                if gt_fret == 0:
+                    ax.text(i + 1, -0.5, 'x', ha='center', va='center', fontsize=16, color='blue')
+                elif gt_fret == 1:
+                    ax.text(i + 1, -0.5, 'o', ha='center', va='center', fontsize=16, color='blue')
 
-            if correct_positions:
-                correct_preds.set_data(*zip(*correct_positions))
-            else:
-                correct_preds.set_data([], [])
+                if pred_fret == 0:
+                    if gt_fret == 0:
+                        ax.text(i + 1, -0.5, 'x', ha='center', va='center', fontsize=16, color='blue',
+                                path_effects=[withStroke(linewidth=3, foreground="magenta")])
+                    else:
+                        ax.text(i + 1, -0.5, 'x', ha='center', va='center', fontsize=16, color='red')
+                elif pred_fret == 1:
+                    if gt_fret == 1:
+                        ax.text(i + 1, -0.5, 'o', ha='center', va='center', fontsize=16, color='blue',
+                                path_effects=[withStroke(linewidth=3, foreground="magenta")])
+                    else:
+                        ax.text(i + 1, -0.5, 'o', ha='center', va='center', fontsize=16, color='red')
 
-            if incorrect_positions:
-                incorrect_preds.set_data(*zip(*incorrect_positions))
-            else:
-                incorrect_preds.set_data([], [])
+                # Plot fretted positions
+                if gt_fret > 1:
+                    ax.scatter(i + 1, gt_fret - 1 + 0.5, color='blue', s=100)
 
-            return ground_truth_markers, correct_preds, incorrect_preds
+                if pred_fret > 1:
+                    if gt_fret == pred_fret:
+                        ax.scatter(i + 1, pred_fret - 1 + 0.5, color='blue', edgecolors='magenta', s=150, linewidth=2)
+                    else:
+                        ax.scatter(i + 1, pred_fret - 1 + 0.5, color='red', s=100)
 
-        # Animate the visualization
-        anim = FuncAnimation(fig, update, frames=num_frames, interval=1000 / frame_rate, blit=True)
+            handles = [
+                plt.Line2D([0], [0], color='blue', marker='o', linestyle='', label='Ground Truth'),
+                plt.Line2D([0], [0], color='blue', marker='o', linestyle='', markeredgecolor='magenta',
+                           markersize=10, label='Correct Prediction'),
+                plt.Line2D([0], [0], color='red', marker='o', linestyle='', label='Incorrect Prediction'),
+            ]
+            ax.legend(handles=handles, loc='lower center')
 
-        # Save as a video
-        writer = FFMpegWriter(fps=frame_rate)
-        anim.save('output.mp4', writer=writer)
-        print("Video saved as output.mp4")
+        # Create animation
+        fps = int(22050/512)  # based on audio preprocessing
+        anim = FuncAnimation(fig, update, frames=audio_frames, init_func=init_fretboard, repeat=False)
+        # print('newnew')
+        # anim.save(output_file, writer=writer)
+        # Save animation as MP4
+        anim.save(output_file, fps=fps, extra_args=['-vcodec', 'libx264'])
+        plt.close(fig)
+
+    def add_audio_to_video(self, video_file, audio_file, output_file="fretboard_animation_with_audio.mp4"):
+        """
+        Adds audio to an existing MP4 video using FFmpeg.
+        """
+        try:
+            subprocess.run([
+                "ffmpeg", "-i", video_file, "-i", audio_file,
+                "-c:v", "copy", "-c:a", "aac", "-shortest", output_file
+            ], check=True)
+            print(f"Audio successfully added: {output_file}")
+        except subprocess.CalledProcessError as e:
+            print(f"Error adding audio: {e}")

@@ -81,10 +81,6 @@ class GuitarSet(Dataset):
     def __len__(self):
         return self.audio.shape[0]
     def __getitem__(self, idx):
-        '''
-        all the processing (creating windows etc) should be done in init
-        we should be able to just return the idx
-        '''
         X = self.audio[idx]
         y = self.labels[idx]
         # print(f'returning X, y shape: {X.shape, y.shape}')
@@ -95,10 +91,10 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
     # Initialize the dataset
-    LEBRON = GuitarSet(data_path='guitarset/spec_repr', window_size=9)
+    guitarset = GuitarSet(data_path='guitarset/spec_repr', window_size=9)
 
     # Wrap it in a DataLoader
-    dataloader = DataLoader(LEBRON, batch_size=32, shuffle=True, num_workers=4)
+    dataloader = DataLoader(guitarset, batch_size=32, shuffle=True, num_workers=4)
 
     # Iterate over batches
     for X_batch, y_batch in dataloader:

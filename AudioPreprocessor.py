@@ -38,15 +38,6 @@ class AudioPreprocessor:
         self.output = dict()
 
 
-    # def get_nth_filename(self, n):
-    #     '''
-    #     get nth file name without file extension
-    #     :return:
-    #     '''
-    #     filename = sorted(os.listdir(self.anno_path))[n]
-    #     filename = osp.splitext(filename)[0]
-    #     return filename
-
     def get_filenames(self):
         '''
         gets list of all filenames without file extension
@@ -72,10 +63,6 @@ class AudioPreprocessor:
         saves result to folder
         :return:
         '''
-        # TODO: right now we'll see if we can organize into 1 main func comprised of a bunch of helpers
-
-        # load audio and annotation file
-        # filename = self.get_nth_filename(n)
 
         audio_file = osp.join(self.audio_path, filename + '_mic.wav')
         anno_file = osp.join(self.anno_path, filename + '.jams')
@@ -173,14 +160,12 @@ class AudioPreprocessor:
     def save_data(self, filename):
         '''
         saves processed audio and label to npz file
-        :param filename:
-        :return:
         '''
         save_path = osp.join(self.save_path, filename + '.npz')
         np.savez(save_path, audio=self.output['audio'], labels=self.output['labels'])
         print(f'preprocessed audio and labels saved to {save_path}')
 
 if __name__ == '__main__':
-    lebron = AudioPreprocessor()
-    lebron.main()
+    audiopreprocessor = AudioPreprocessor()
+    audiopreprocessor.main()
 
