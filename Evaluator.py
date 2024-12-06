@@ -74,8 +74,6 @@ class Evaluator:
 
         y_pred = y_pred.cpu().numpy()
         y_true = y.cpu().numpy()
-        print(y_pred.shape)
-        print('hi hello hi lmao')
         audio_file = f'guitarset/audio_mono-mic/{filename}_mic.wav'
         self.plot_fretboard_animation(y_true, y_pred)
         self.add_audio_to_video('fretboard_animation_no_audio.mp4', audio_file)
@@ -148,14 +146,13 @@ class Evaluator:
                         ax.text(i + 1, -0.5, 'o', ha='center', va='center', fontsize=16, color='red')
 
                 # Plot fretted positions
-                if gt_fret > 1:
-                    ax.scatter(i + 1, gt_fret - 1 + 0.5, color='blue', s=100)
-
                 if pred_fret > 1:
                     if gt_fret == pred_fret:
-                        ax.scatter(i + 1, pred_fret - 1 + 0.5, color='blue', edgecolors='magenta', s=150, linewidth=2)
+                        ax.scatter(i + 1, pred_fret - 1.5, color='blue', edgecolors='magenta', s=150, linewidth=2)
                     else:
-                        ax.scatter(i + 1, pred_fret - 1 + 0.5, color='red', s=100)
+                        ax.scatter(i + 1, pred_fret - 1.5, color='red', s=100)
+                        if gt_fret > 1:
+                            ax.scatter(i + 1, gt_fret - 1.5, color='blue', s=100)
 
             handles = [
                 plt.Line2D([0], [0], color='blue', marker='o', linestyle='', label='Ground Truth'),
@@ -168,8 +165,6 @@ class Evaluator:
         # Create animation
         fps = int(22050/512)  # based on audio preprocessing
         anim = FuncAnimation(fig, update, frames=audio_frames, init_func=init_fretboard, repeat=False)
-        # print('newnew')
-        # anim.save(output_file, writer=writer)
         # Save animation as MP4
         anim.save(output_file, fps=fps, extra_args=['-vcodec', 'libx264'])
         plt.close(fig)
