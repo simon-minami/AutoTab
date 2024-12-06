@@ -3,9 +3,8 @@ import torch
 import torch.nn as nn
 import plotly.graph_objects as go
 import numpy as np
-from TabCNN import TabCNN
-from GuitarSet import GuitarSet
-from torch.utils.data import DataLoader
+
+
 class TabCNNCrossEntropyLoss(nn.Module):
     '''
     custom loss function for tabcnn
@@ -27,7 +26,7 @@ class TabCNNCrossEntropyLoss(nn.Module):
 
 
 class Trainer:
-    def __init__(self, epochs, train_dataloader, val_dataloader, model, optimizer, loss_fn=TabCNNCrossEntropyLoss(), save_path='models'):
+    def __init__(self, epochs, train_dataloader, val_dataloader, model, optimizer, loss_fn=TabCNNCrossEntropyLoss(), save_path='saved_models'):
         # train, val, test dataloders model, loss fn etc
         self.epochs = epochs
         self.train_dataloader = train_dataloader
@@ -133,12 +132,5 @@ class Trainer:
 
         # Save as an interactive HTML file
         fig.write_html('loss.html')
-
-
-
-
-    #TODO: separate eval and video methods from trainer into new class?
-    #TODO: for exampel: if you want to run eval or get demo video from different models, without retraining
-
 
 

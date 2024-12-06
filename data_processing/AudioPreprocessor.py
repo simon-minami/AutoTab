@@ -18,15 +18,15 @@ class AudioPreprocessor:
         self.open_string_midi_values = [40, 45, 50, 55, 59, 64]
         self.highest_fret = 19
         self.num_classes = 19 + 2  # for open and closed string
-        self.save_path = 'guitarset/spec_repr'
+        self.save_path = '../guitarset/spec_repr'
 
         # files that have been identifed as innacurate in some way by guitarset authors
         self.exclude_filenames = ['04_BN3-154-E_comp', '04_Jazz1-200-B_comp', '02_Funk2-119-G_comp']
 
 
         # TODO: define all the constant stuff
-        self.anno_path = 'guitarset/annotation'
-        self.audio_path = 'guitarset/audio_mono-mic'
+        self.anno_path = '../guitarset/annotation'
+        self.audio_path = '../guitarset/audio_mono-mic'
 
 
         # CQT params

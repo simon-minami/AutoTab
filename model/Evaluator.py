@@ -1,18 +1,18 @@
 '''
 Evaluator class
-runs evaluation and produces output visulization
+runs evaluation and produces output visualization
 '''
 import torch
 from TabCNN import TabCNN
 import torch.nn.functional as F
-from GuitarSet import GuitarSet
+from data_processing.GuitarSet import GuitarSet
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from matplotlib.patheffects import withStroke
-from matplotlib.animation import FuncAnimation, PillowWriter
+from matplotlib.animation import FuncAnimation
 import subprocess
 class Evaluator:
-    def __init__(self, test_dataloader, model_path='models/best.pt', ):
+    def __init__(self, test_dataloader, model_path='saved_models/best.pt', ):
         self.model_path = model_path
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.test_dataloader = test_dataloader

@@ -1,8 +1,4 @@
 '''
-version 2 of guitarset
-old verison too slow
-move the padding, swap axes, and tensor conversion to init
-
 guitarset is a pytorch dataset object
 used to load and process data into windows for training
 used AFTER audio preprocessed by AudioPreprocessor
@@ -12,17 +8,6 @@ import torch
 import os
 import numpy as np
 class GuitarSet(Dataset):
-    '''
-    general plan
-    do concatenation of all the audio in the init
-    also keep track of the start index of each audio frame
-    if we have 3 audio files with num_frames 5, 7, 10:
-    start indices would just be cumaltive sum: [0, 5, 12]
-    we use these indices in get item to figure out whether we need padding,
-    and avoid overlapping audio files
-
-    '''
-
     def __init__(self, data_path='guitarset/spec_repr', window_size=9, filenames=None):
         # Initialize the dataset object with the data path and window size
         self.data_path = data_path
@@ -61,7 +46,7 @@ class GuitarSet(Dataset):
 
             # Extract sliding windows across the frame dimension using unfold
             X = padded_audio.unfold(dimension=2, size=self.window_size, step=1).permute(2, 0, 1, 3)
-            # Shape of X: (num_frames, 1, 192, window_size) - ready to be used by PyTorch models
+            # Shape of X: (num_frames, 1, 192, window_size) - ready to be used by PyTorch saved_models
             audio_data.append(X)  # Add the processed audio windows to the list
 
             # Convert the labels to a tensor and add to the label list
@@ -91,7 +76,7 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
     # Initialize the dataset
-    guitarset = GuitarSet(data_path='guitarset/spec_repr', window_size=9)
+    guitarset = GuitarSet(data_path='../guitarset/spec_repr', window_size=9)
 
     # Wrap it in a DataLoader
     dataloader = DataLoader(guitarset, batch_size=32, shuffle=True, num_workers=4)

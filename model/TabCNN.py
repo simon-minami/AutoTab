@@ -1,8 +1,5 @@
-# first, model design
-import torch.nn as nn
-
 '''
-some notes: what operation does conv 2d actually do? it takes sum of element wise multiplication
+model design of tabcnn
 '''
 import torch
 import torch.nn as nn
@@ -86,21 +83,21 @@ class TabCNN(nn.Module):
 
         return x
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # testing
-    from torch.utils.data import DataLoader
-    from GuitarSet import GuitarSet
-
-    lebron = GuitarSet()
-    dataloader = DataLoader(lebron, batch_size=32)
-    lonzo = TabCNN()
-    for X_batch, y_batch in dataloader:
-        print(f'X_batch shape: {X_batch.shape} | y_batch shape: {y_batch.shape}')
-        with torch.inference_mode():
-            result = lonzo(X_batch)
-        print(f'result: {result.shape}')
-        print(torch.sum(result[0], dim=1))
-        print(f'example y: {y_batch[30]}')
-        break
+    # from torch.utils.data import DataLoader
+    # from data_processing.GuitarSet import GuitarSet
+    #
+    # lebron = GuitarSet()
+    # dataloader = DataLoader(lebron, batch_size=32)
+    # lonzo = TabCNN()
+    # for X_batch, y_batch in dataloader:
+    #     print(f'X_batch shape: {X_batch.shape} | y_batch shape: {y_batch.shape}')
+    #     with torch.inference_mode():
+    #         result = lonzo(X_batch)
+    #     print(f'result: {result.shape}')
+    #     print(torch.sum(result[0], dim=1))
+    #     print(f'example y: {y_batch[30]}')
+    #     break
 
 

@@ -3,20 +3,18 @@ run training according to tabcnn paper
 '''
 import torch
 from torch.utils.data import DataLoader
-from GuitarSet import GuitarSet
-from TabCNN import TabCNN
-from Trainer import Trainer
-from Evaluator import Evaluator
+from data_processing.GuitarSet import GuitarSet
+from model.TabCNN import TabCNN
+from model.Trainer import Trainer
+from model.Evaluator import Evaluator
 from torch.utils.data import random_split
 import argparse
-# TODO see what output is on custom audio
 
 
 def parser():
     parser = argparse.ArgumentParser(
         prog='tabcnn',
-        description='training tabcnn',
-        epilog='my goat lebron'
+        description='training tabcnn'
     )
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--epochs', type=int, default=20)
@@ -49,7 +47,7 @@ if __name__ == '__main__':
     trainer.fit()
 
     evaluator = Evaluator(
-        model_path='models/best.pt',
+        model_path='saved_models/best.pt',
         test_dataloader=test_dataloader
     )
     mp_precision = evaluator.evaluate()

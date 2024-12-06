@@ -53,6 +53,7 @@ guitarset/
 Run the audio preprocessor to prepare the data:
 
 ```bash
+cd data_processing
 python AudioPreprocessor.py
 ```
 
