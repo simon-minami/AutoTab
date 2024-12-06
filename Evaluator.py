@@ -175,7 +175,7 @@ class Evaluator:
         """
         try:
             subprocess.run([
-                "ffmpeg", "-f", "-i", video_file, "-i", audio_file,
+                "ffmpeg", "-y", "-i", video_file, "-i", audio_file,
                 "-c:v", "copy", "-c:a", "aac", "-shortest", output_file
             ], check=True)
             print(f"Audio successfully added: {output_file}")
