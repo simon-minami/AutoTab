@@ -3,7 +3,7 @@ Evaluator class
 runs evaluation and produces output visualization
 '''
 import torch
-from TabCNN import TabCNN
+from model.TabCNN import TabCNN
 import torch.nn.functional as F
 from data_processing.GuitarSet import GuitarSet
 from torch.utils.data import DataLoader
