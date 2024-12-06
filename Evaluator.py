@@ -146,13 +146,14 @@ class Evaluator:
                         ax.text(i + 1, -0.5, 'o', ha='center', va='center', fontsize=16, color='red')
 
                 # Plot fretted positions
+                if gt_fret > 1:
+                    ax.scatter(i + 1, gt_fret - 1.5, color='blue', s=100)
                 if pred_fret > 1:
                     if gt_fret == pred_fret:
                         ax.scatter(i + 1, pred_fret - 1.5, color='blue', edgecolors='magenta', s=150, linewidth=2)
                     else:
                         ax.scatter(i + 1, pred_fret - 1.5, color='red', s=100)
-                        if gt_fret > 1:
-                            ax.scatter(i + 1, gt_fret - 1.5, color='blue', s=100)
+
 
             handles = [
                 plt.Line2D([0], [0], color='blue', marker='o', linestyle='', label='Ground Truth'),
